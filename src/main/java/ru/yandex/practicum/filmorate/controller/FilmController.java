@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,12 +16,12 @@ public class FilmController {
         return films;
     }
     @PostMapping
-    public Film addFilm(@RequestBody Film film) {
+    public Film addFilm(@Valid @RequestBody Film film) {
         films.put(film.getId(), film);
         return film;
     }
     @PutMapping
-    public Film updateFilm(@RequestBody Film film) {
+    public Film updateFilm(@Valid @RequestBody Film film) {
         films.put(film.getId(), film);
         return film;
     }

@@ -1,14 +1,14 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 
+import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 
+@RestController
+@RequestMapping("/user")
 public class UserController {
     private final Map<Integer, User> users = new HashMap<>();
     @GetMapping
@@ -16,12 +16,12 @@ public class UserController {
         return users;
     }
     @PostMapping
-    public User addUser(@RequestBody User user) {
+    public User addUser(@Valid @RequestBody User user) {
         users.put(user.getId(), user);
         return user;
     }
     @PutMapping
-    public User updateUser(@RequestBody User user) {
+    public User updateUser(@Valid @RequestBody User user) {
         users.put(user.getId(), user);
         return user;
     }
