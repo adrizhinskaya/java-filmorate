@@ -2,35 +2,50 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 
 import javax.validation.Valid;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/users")
 @Slf4j
 public class UserController {
     private final Map<Integer, User> users = new HashMap<>();
+
     @GetMapping
-    public Map<Integer, User> getUsers() {
-        return users;
+    public Collection<User> getUsers() {
+        return users.values();
     }
+
     @PostMapping
-    public User addUser(@Valid @RequestBody User user) {
-        users.put(user.getId(), user);
+    public ResponseEntity<?> addUser(@Valid @RequestBody User user) {
         log.info("Получен POST запрос к эндпоинту \"/user\".");
-        return user;
-    }
-    @PutMapping
-    public User updateUser(@Valid @RequestBody User user) {
+        if (user.getId() == null) {
+            int id = users.isEmpty() ? 1 : Collections.max(users.keySet()) + 1;
+            user.setId(id);
+        } else if (users.containsKey(user.getId())) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         users.put(user.getId(), user);
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
+    @PutMapping
+    public ResponseEntity<?> updateUser(@Valid @RequestBody User user) {
         log.info("Получен PUT запрос к эндпоинту \"/user\".");
-        return user;
+        if (!users.containsKey(user.getId())) {
+            return new ResponseEntity<>(user, HttpStatus.NOT_FOUND);
+        }
+        users.put(user.getId(), user);
+        return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

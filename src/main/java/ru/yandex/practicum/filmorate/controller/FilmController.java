@@ -2,35 +2,50 @@ package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import javax.validation.Valid;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/film")
+@RequestMapping("/films")
 @Slf4j
 public class FilmController {
     private final Map<Integer, Film> films = new HashMap<>();
+
     @GetMapping
-    public Map<Integer, Film> getFilms() {
-        return films;
+    public Collection<Film> getFilms() {
+        return films.values();
     }
+
     @PostMapping
-    public Film addFilm(@Valid @RequestBody Film film) {
-        films.put(film.getId(), film);
+    public ResponseEntity<?> addFilm(@Valid @RequestBody Film film) {
         log.info("Получен POST запрос к эндпоинту \"/film\".");
-        return film;
-    }
-    @PutMapping
-    public Film updateFilm(@Valid @RequestBody Film film) {
+        if (film.getId() == null) {
+            int id = films.isEmpty() ? 1 : Collections.max(films.keySet()) + 1;
+            film.setId(id);
+        } else if (films.containsKey(film.getId())) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         films.put(film.getId(), film);
+        return new ResponseEntity<>(film, HttpStatus.OK);
+    }
+
+    @PutMapping
+    public ResponseEntity<?> updateFilm(@Valid @RequestBody Film film) {
         log.info("Получен PUT запрос к эндпоинту \"/film\".");
-        return film;
+        if (!films.containsKey(film.getId())) {
+            return new ResponseEntity<>(film, HttpStatus.NOT_FOUND);
+        }
+        films.put(film.getId(), film);
+        return new ResponseEntity<>(film, HttpStatus.OK);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
