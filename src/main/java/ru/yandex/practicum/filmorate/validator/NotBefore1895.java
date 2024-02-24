@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = NotBefore1895Validator.class)
 public @interface NotBefore1895 {
-    String message() default "NotBefore1895.invalid";
+    String message() default "Дата должна быть не раньше 1895-12-28";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

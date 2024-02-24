@@ -14,7 +14,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = DurationPositiveValidator.class)
 public @interface DurationPositive {
-    String message() default "DurationPositive.invalid";
+    String message() default "Продолжительность должна быть положительной";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }
