@@ -67,6 +67,6 @@ public class UserController {
     }
 
     private Integer generateId() {
-        return id++;
+        return ++id;
     }
 }
