@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import javax.validation.Valid;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +17,7 @@ import java.util.Map;
 @RequestMapping("/films")
 @Slf4j
 public class FilmController {
+    private int id = 0;
     private final Map<Integer, Film> films = new HashMap<>();
 
     @GetMapping
@@ -28,12 +28,11 @@ public class FilmController {
     @PostMapping
     public ResponseEntity<?> addFilm(@Valid @RequestBody Film film) {
         log.info("Получен POST запрос к эндпоинту \"/film\".");
-        if (film.getId() == null) {
-            int id = films.isEmpty() ? 1 : Collections.max(films.keySet()) + 1;
-            film.setId(id);
-        } else if (films.containsKey(film.getId())) {
+        if (films.containsKey(film.getId())) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+
+        film.setId(generateId());
         films.put(film.getId(), film);
         return new ResponseEntity<>(film, HttpStatus.OK);
     }
@@ -59,5 +58,9 @@ public class FilmController {
         });
         log.error("Ошибка валидации к эндпоинту \"/film\": {}", errors);
         return errors;
+    }
+
+    private Integer generateId() {
+        return id++;
     }
 }

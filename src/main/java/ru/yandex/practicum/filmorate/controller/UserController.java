@@ -18,23 +18,26 @@ import java.util.Map;
 @RequestMapping("/users")
 @Slf4j
 public class UserController {
+    private int id = 0;
     private final Map<Integer, User> users = new HashMap<>();
 
     @GetMapping
     public Collection<User> getUsers() {
+        log.info("Получен GET запрос к эндпоинту \"/user\".");
         return users.values();
     }
 
     @PostMapping
     public ResponseEntity<?> addUser(@Valid @RequestBody User user) {
         log.info("Получен POST запрос к эндпоинту \"/user\".");
-        if (user.getId() == null) {
-            int id = users.isEmpty() ? 1 : Collections.max(users.keySet()) + 1;
-            user.setId(id);
-        } else if (users.containsKey(user.getId())) {
+        if (users.containsKey(user.getId())) {
+            log.error("Уже существует пользователь с таким id");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+
+        user.setId(generateId());
         users.put(user.getId(), user);
+        log.info("Добавлен новый пользователь с id = " + user.getId());
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
@@ -45,6 +48,8 @@ public class UserController {
             return new ResponseEntity<>(user, HttpStatus.NOT_FOUND);
         }
         users.put(user.getId(), user);
+        log.info("Обновлён пользователь с id = " + user.getId());
+
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
@@ -59,5 +64,9 @@ public class UserController {
         });
         log.error("Ошибка валидации к эндпоинту \"/user\": {}", errors);
         return errors;
+    }
+
+    private Integer generateId() {
+        return id++;
     }
 }
