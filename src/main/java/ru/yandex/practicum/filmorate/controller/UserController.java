@@ -18,6 +18,7 @@ import java.util.Map;
 @RequestMapping("/users")
 @Slf4j
 public class UserController {
+    private int id = 0;
     private final Map<Integer, User> users = new HashMap<>();
 
     @GetMapping
@@ -28,12 +29,11 @@ public class UserController {
     @PostMapping
     public ResponseEntity<?> addUser(@Valid @RequestBody User user) {
         log.info("Получен POST запрос к эндпоинту \"/user\".");
-        if (user.getId() == null) {
-            int id = users.isEmpty() ? 1 : Collections.max(users.keySet()) + 1;
-            user.setId(id);
-        } else if (users.containsKey(user.getId())) {
+        if (users.containsKey(user.getId())) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+
+        user.setId(generateId());
         users.put(user.getId(), user);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
@@ -59,5 +59,9 @@ public class UserController {
         });
         log.error("Ошибка валидации к эндпоинту \"/user\": {}", errors);
         return errors;
+    }
+
+    private Integer generateId() {
+        return id++;
     }
 }
