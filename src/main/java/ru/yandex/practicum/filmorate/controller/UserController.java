@@ -1,71 +1,60 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import javax.validation.Valid;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
-@Slf4j
 public class UserController {
-    private int id = 0;
-    private final Map<Integer, User> users = new HashMap<>();
+    private final UserStorage userStorage;
+    private final UserService userService;
+
+    @Autowired
+    public UserController(UserStorage userStorage, UserService userService) {
+        this.userStorage = userStorage;
+        this.userService = userService;
+    }
 
     @GetMapping
     public Collection<User> getUsers() {
-        log.info("Получен GET запрос к эндпоинту \"/user\".");
-        return users.values();
+        return userStorage.getUsers();
+    }
+
+    @GetMapping("/{id}/friends")
+    public List<User> getFriends(@PathVariable int id) {
+        return userService.getFriends(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> getCommonFriends(@PathVariable int id, @PathVariable int otherId) {
+        return userService.getCommonFriends(id, otherId);
     }
 
     @PostMapping
     public ResponseEntity<?> addUser(@Valid @RequestBody User user) {
-        log.info("Получен POST запрос к эндпоинту \"/user\".");
-        if (users.containsKey(user.getId())) {
-            log.error("Уже существует пользователь с таким id");
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        user.setId(generateId());
-        users.put(user.getId(), user);
-        log.info("Добавлен новый пользователь с id = " + user.getId());
-        return new ResponseEntity<>(user, HttpStatus.OK);
+        return userStorage.addUser(user);
     }
 
     @PutMapping
     public ResponseEntity<?> updateUser(@Valid @RequestBody User user) {
-        log.info("Получен PUT запрос к эндпоинту \"/user\".");
-        if (!users.containsKey(user.getId())) {
-            return new ResponseEntity<>(user, HttpStatus.NOT_FOUND);
-        }
-        users.put(user.getId(), user);
-        log.info("Обновлён пользователь с id = " + user.getId());
-
-        return new ResponseEntity<>(user, HttpStatus.OK);
+        return userStorage.updateUser(user);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-        log.error("Ошибка валидации к эндпоинту \"/user\": {}", errors);
-        return errors;
+    @PutMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<?> addFriend(@PathVariable int id, @PathVariable int friendId) {
+        return userService.addFriend(id, friendId);
     }
 
-    private Integer generateId() {
-        return ++id;
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public ResponseEntity<?> deleteFriend(@PathVariable int id, @PathVariable int friendId) {
+        return userService.deleteFriend(id, friendId);
     }
 }
