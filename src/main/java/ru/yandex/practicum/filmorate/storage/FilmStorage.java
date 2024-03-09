@@ -11,8 +11,10 @@ public interface FilmStorage {
     public ResponseEntity<?> addFilm(Film film);
 
     public ResponseEntity<?> updateFilm(Film film);
+
     public boolean filmExists(Integer id);
 
     public Film getFilmById(Integer id);
 
-    public Integer generateId();}
+    public Integer generateId();
+}
