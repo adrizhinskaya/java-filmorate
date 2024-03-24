@@ -1,66 +1,51 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/films")
-@Slf4j
 public class FilmController {
-    private int id = 0;
-    private final Map<Integer, Film> films = new HashMap<>();
+    private final FilmService filmService;
+
+    @Autowired
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
+    }
 
     @GetMapping
     public Collection<Film> getFilms() {
-        return films.values();
+        return filmService.getFilms();
+    }
+
+    @GetMapping("/popular")
+    public Collection<Film> getPopular(@RequestParam int count) {
+        return filmService.getPopular(count);
     }
 
     @PostMapping
     public ResponseEntity<?> addFilm(@Valid @RequestBody Film film) {
-        log.info("Получен POST запрос к эндпоинту \"/film\".");
-        if (films.containsKey(film.getId())) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        film.setId(generateId());
-        films.put(film.getId(), film);
-        return new ResponseEntity<>(film, HttpStatus.OK);
+        return filmService.addFilm(film);
     }
 
     @PutMapping
     public ResponseEntity<?> updateFilm(@Valid @RequestBody Film film) {
-        log.info("Получен PUT запрос к эндпоинту \"/film\".");
-        if (!films.containsKey(film.getId())) {
-            return new ResponseEntity<>(film, HttpStatus.NOT_FOUND);
-        }
-        films.put(film.getId(), film);
-        return new ResponseEntity<>(film, HttpStatus.OK);
+        return filmService.updateFilm(film);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-        log.error("Ошибка валидации к эндпоинту \"/film\": {}", errors);
-        return errors;
+    @PutMapping("/{id}/like/{userId}")
+    public ResponseEntity<?> addLike(@PathVariable int id, @PathVariable int userId) {
+        return filmService.addLike(id, userId);
     }
 
-    private Integer generateId() {
-        return ++id;
+    @DeleteMapping("/{id}/like/{userId}")
+    public ResponseEntity<?> deleteLike(@PathVariable int id, @PathVariable int userId) {
+        return filmService.deleteLike(id, userId);
     }
 }
