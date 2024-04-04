@@ -27,14 +27,10 @@ public class Film {
     @Positive
     private Integer duration;
 
-    private Integer mpa_id;
+    private Mpa mpa;
+    private Genre[] genres;
+//                "rate": 4,
+//                        "mpa": { "id": 5},
+//            "genres": [{ "id": 2}]
 
-    public Film(Integer id, String name, String description, LocalDate releaseDate, Integer duration, Integer mpa_id) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.releaseDate = releaseDate;
-        this.duration = duration;
-        this.mpa_id = mpa_id;
-    }
 }
