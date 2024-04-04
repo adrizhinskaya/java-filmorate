@@ -3,7 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.entity.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
@@ -19,6 +19,11 @@ public class FilmController {
         this.filmService = filmService;
     }
 
+    @PostMapping
+    public ResponseEntity<?> addFilm(@Valid @RequestBody Film film) {
+        return filmService.addFilm(film);
+    }
+
     @GetMapping
     public Collection<Film> getFilms() {
         return filmService.getFilms();
@@ -27,11 +32,6 @@ public class FilmController {
     @GetMapping("/popular")
     public Collection<Film> getPopular(@RequestParam int count) {
         return filmService.getPopular(count);
-    }
-
-    @PostMapping
-    public ResponseEntity<?> addFilm(@Valid @RequestBody Film film) {
-        return filmService.addFilm(film);
     }
 
     @PutMapping
