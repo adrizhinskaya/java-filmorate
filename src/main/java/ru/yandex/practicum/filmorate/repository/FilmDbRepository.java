@@ -11,11 +11,11 @@ import ru.yandex.practicum.filmorate.entity.Mpa;
 
 import java.sql.*;
 import java.util.Collection;
-import java.util.List;
 
 @Repository
 public class FilmDbRepository implements FilmRepository {
     private final JdbcTemplate jdbcTemplate;
+
     @Autowired
     public FilmDbRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -38,13 +38,12 @@ public class FilmDbRepository implements FilmRepository {
             return ps;
         }, keyHolder);
 
-        // вставка значений в film_genre
         Integer id = keyHolder.getKey().intValue();
-        if(film.getGenres() != null) {
+        if (film.getGenres() != null) {
             String sqlQuery1 = "merge into film_genre (film_id, genre_id) key (film_id, genre_id) " +
                     "values (?, ?)";
 
-            for(Genre g : film.getGenres()) {
+            for (Genre g : film.getGenres()) {
                 jdbcTemplate.update(sqlQuery1
                         , id
                         , g.getId());
@@ -60,6 +59,7 @@ public class FilmDbRepository implements FilmRepository {
         Film a = jdbcTemplate.queryForObject(sqlQuery, this::mapRowToFilm, id);
         return a;
     }
+
     @Override
     public Collection<Film> getAll() {
         String sqlQuery = "select * from film";
@@ -79,12 +79,12 @@ public class FilmDbRepository implements FilmRepository {
                 , film.getMpa().getId()
                 , film.getId());
 
-        if(film.getGenres() != null) {
+        if (film.getGenres() != null) {
             String sqlQuery1 = "update film_genre set " +
                     "genre_id = ?" +
                     "where film_id = ?";
 
-            for(Genre g : film.getGenres()) {
+            for (Genre g : film.getGenres()) {
                 jdbcTemplate.update(sqlQuery1
                         , g.getId()
                         , film.getId());

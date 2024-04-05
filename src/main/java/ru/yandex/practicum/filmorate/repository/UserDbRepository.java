@@ -5,7 +5,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.entity.Film;
 import ru.yandex.practicum.filmorate.entity.User;
 
 import java.sql.*;
@@ -15,6 +14,7 @@ import java.util.List;
 @Repository
 public class UserDbRepository implements UserRepository {
     private final JdbcTemplate jdbcTemplate;
+
     @Autowired
     public UserDbRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -81,6 +81,7 @@ public class UserDbRepository implements UserRepository {
                 true);
     }
 
+    @Override
     public List<User> getFriends(Integer id) {
         String sqlQuery = "SELECT u.id, u.email, u.login, u.name, u.birthday " +
                 "FROM users u " +

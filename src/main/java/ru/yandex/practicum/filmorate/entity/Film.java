@@ -28,6 +28,7 @@ public class Film {
     private Integer duration;
 
     private Mpa mpa;
+
     private Collection<Genre> genres;
 
     public Film(Integer id, String name, String description, LocalDate releaseDate, Integer duration, Mpa mpa, Collection<Genre> genres) {

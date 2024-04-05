@@ -6,12 +6,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.entity.Mpa;
-import ru.yandex.practicum.filmorate.entity.User;
 import ru.yandex.practicum.filmorate.service.MpaService;
-import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
-import java.util.List;
 
 @RestController
 @RequestMapping("/mpa")
@@ -22,6 +19,7 @@ public class MpaController {
     public MpaController(MpaService mpaService) {
         this.mpaService = mpaService;
     }
+
     @GetMapping
     public Collection<Mpa> getMpa() {
         return mpaService.getAll();

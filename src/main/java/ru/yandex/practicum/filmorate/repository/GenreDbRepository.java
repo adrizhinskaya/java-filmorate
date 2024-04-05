@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.entity.Genre;
-import ru.yandex.practicum.filmorate.entity.Mpa;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,6 +12,7 @@ import java.util.Collection;
 @Repository
 public class GenreDbRepository {
     private final JdbcTemplate jdbcTemplate;
+
     @Autowired
     public GenreDbRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;

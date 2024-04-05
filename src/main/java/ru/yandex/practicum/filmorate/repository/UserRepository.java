@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.repository;
 
-import ru.yandex.practicum.filmorate.entity.Film;
 import ru.yandex.practicum.filmorate.entity.User;
 
 import java.util.Collection;

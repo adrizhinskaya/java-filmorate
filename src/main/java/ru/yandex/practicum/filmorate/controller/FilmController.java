@@ -28,6 +28,7 @@ public class FilmController {
     public Film getFilmByID(@PathVariable int id) {
         return filmService.getFilmById(id);
     }
+
     @GetMapping
     public Collection<Film> getFilms() {
         return filmService.getFilms();
