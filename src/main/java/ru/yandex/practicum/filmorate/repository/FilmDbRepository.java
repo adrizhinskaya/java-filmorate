@@ -73,8 +73,8 @@ public class FilmDbRepository implements FilmRepository {
         String sqlQuery = "update film set " +
                 "name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ?" +
                 "where id = ?";
-        jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration()
-                , film.getMpa().getId(), film.getId());
+        jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(),
+                film.getMpa().getId(), film.getId());
 
         if (film.getGenres() != null) {
             String sqlQuery1 = "update film_genre set " +
@@ -82,9 +82,7 @@ public class FilmDbRepository implements FilmRepository {
                     "where film_id = ?";
 
             for (Genre g : film.getGenres()) {
-                jdbcTemplate.update(sqlQuery1
-                        , g.getId()
-                        , film.getId());
+                jdbcTemplate.update(sqlQuery1, g.getId(), film.getId());
             }
         }
     }
