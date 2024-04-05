@@ -25,7 +25,8 @@ public class FilmService {
     private final GenreDbRepository genreDbRepository;
 
     @Autowired
-    public FilmService(FilmRepository filmRepository, UserRepository userRepository, MpaDbRepository mpaDbRepository, GenreDbRepository genreDbRepository) {
+    public FilmService(FilmRepository filmRepository, UserRepository userRepository, MpaDbRepository mpaDbRepository,
+                       GenreDbRepository genreDbRepository) {
         this.filmRepository = filmRepository;
         this.userRepository = userRepository;
         this.mpaDbRepository = mpaDbRepository;

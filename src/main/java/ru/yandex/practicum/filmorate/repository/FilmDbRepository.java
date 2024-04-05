@@ -7,7 +7,6 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.entity.Film;
 import ru.yandex.practicum.filmorate.entity.Genre;
-import ru.yandex.practicum.filmorate.entity.Mpa;
 
 import java.sql.*;
 import java.util.Collection;
@@ -15,10 +14,15 @@ import java.util.Collection;
 @Repository
 public class FilmDbRepository implements FilmRepository {
     private final JdbcTemplate jdbcTemplate;
+    private final MpaDbRepository mpaDbRepository;
+    private final GenreDbRepository genreDbRepository;
 
     @Autowired
-    public FilmDbRepository(JdbcTemplate jdbcTemplate) {
+    public FilmDbRepository(JdbcTemplate jdbcTemplate, MpaDbRepository mpaDbRepository,
+                            GenreDbRepository genreDbRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.mpaDbRepository = mpaDbRepository;
+        this.genreDbRepository = genreDbRepository;
     }
 
     @Override
@@ -44,9 +48,7 @@ public class FilmDbRepository implements FilmRepository {
                     "values (?, ?)";
 
             for (Genre g : film.getGenres()) {
-                jdbcTemplate.update(sqlQuery1
-                        , id
-                        , g.getId());
+                jdbcTemplate.update(sqlQuery1, id, g.getId());
             }
         }
         return id;
@@ -71,13 +73,8 @@ public class FilmDbRepository implements FilmRepository {
         String sqlQuery = "update film set " +
                 "name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ?" +
                 "where id = ?";
-        jdbcTemplate.update(sqlQuery
-                , film.getName()
-                , film.getDescription()
-                , film.getReleaseDate()
-                , film.getDuration()
-                , film.getMpa().getId()
-                , film.getId());
+        jdbcTemplate.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration()
+                , film.getMpa().getId(), film.getId());
 
         if (film.getGenres() != null) {
             String sqlQuery1 = "update film_genre set " +
@@ -103,16 +100,14 @@ public class FilmDbRepository implements FilmRepository {
     public void addLike(Integer filmId, Integer userId) {
         String sqlQuery = "insert into film_like (film_id, user_id) " +
                 "values (?, ?)";
-        jdbcTemplate.update(sqlQuery,
-                filmId,
-                userId);
+        jdbcTemplate.update(sqlQuery, filmId, userId);
     }
 
     @Override
     public Collection<Film> getPopular(Integer count) {
         String sqlQuery = "SELECT f.* FROM film f LEFT OUTER JOIN " +
-                "(SELECT film_id, COUNT(user_id) AS like_count FROM film_like GROUP BY film_id) fl ON f.id = fl.film_id " +
-                "ORDER BY COALESCE(fl.like_count, 0) DESC LIMIT ?";
+                "(SELECT film_id, COUNT(user_id) AS like_count FROM film_like GROUP BY film_id) fl " +
+                "ON f.id = fl.film_id ORDER BY COALESCE(fl.like_count, 0) DESC LIMIT ?";
 
         Collection<Film> pop = jdbcTemplate.query(sqlQuery, this::mapRowToFilm, count);
         return pop;
@@ -133,7 +128,8 @@ public class FilmDbRepository implements FilmRepository {
                 .description(resultSet.getString("description"))
                 .releaseDate(resultSet.getDate("release_date").toLocalDate())
                 .duration(resultSet.getInt("duration"))
-                .mpa(resultSet.getString("mpa_id") != null ? getMpaById(resultSet.getInt("mpa_id")) : null)
+                .mpa(resultSet.getString("mpa_id") != null ?
+                        mpaDbRepository.getById(resultSet.getInt("mpa_id")) : null)
                 .genres(genres)
                 .build();
         return result;
@@ -146,30 +142,6 @@ public class FilmDbRepository implements FilmRepository {
     }
 
     private Genre mapRowToFilmGenre(ResultSet resultSet, Integer rowNum) throws SQLException {
-        return getGenreById(resultSet.getInt("genre_id"));
-    }
-
-    public Mpa getMpaById(Integer id) {
-        String sqlQuery = "select * from mpa where id = ?";
-        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToMpa, id);
-    }
-
-    public Genre getGenreById(Integer id) {
-        String sqlQuery = "select * from genre where id = ?";
-        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToGenre, id);
-    }
-
-    private Genre mapRowToGenre(ResultSet resultSet, Integer rowNum) throws SQLException {
-        return Genre.builder()
-                .id(resultSet.getInt("id"))
-                .name(resultSet.getString("name"))
-                .build();
-    }
-
-    private Mpa mapRowToMpa(ResultSet resultSet, Integer rowNum) throws SQLException {
-        return Mpa.builder()
-                .id(resultSet.getInt("id"))
-                .name(resultSet.getString("name"))
-                .build();
+        return genreDbRepository.getById(resultSet.getInt("genre_id"));
     }
 }

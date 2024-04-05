@@ -31,7 +31,8 @@ public class Film {
 
     private Collection<Genre> genres;
 
-    public Film(Integer id, String name, String description, LocalDate releaseDate, Integer duration, Mpa mpa, Collection<Genre> genres) {
+    public Film(Integer id, String name, String description, LocalDate releaseDate, Integer duration, Mpa mpa,
+                Collection<Genre> genres) {
         this.id = id;
         this.name = name;
         this.description = description;
