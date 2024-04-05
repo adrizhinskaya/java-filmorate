@@ -29,8 +29,14 @@ public class Film {
 
     private Mpa mpa;
     private Collection<Genre> genres;
-//                "rate": 4,
-//                        "mpa": { "id": 5},
-//            "genres": [{ "id": 2}]
 
+    public Film(Integer id, String name, String description, LocalDate releaseDate, Integer duration, Mpa mpa, Collection<Genre> genres) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.releaseDate = releaseDate;
+        this.duration = duration;
+        this.mpa = mpa;
+        this.genres = genres;
+    }
 }

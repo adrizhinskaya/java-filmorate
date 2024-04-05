@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.entity.Film;
 import ru.yandex.practicum.filmorate.entity.User;
 
 import java.sql.*;
@@ -35,6 +36,13 @@ public class UserDbRepository implements UserRepository {
         }, keyHolder);
 
         return keyHolder.getKey().intValue();
+    }
+
+    @Override
+    public User getById(Integer id) {
+        String sqlQuery = "select * " +
+                "from users where id = ?";
+        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToUser, id);
     }
 
     @Override
