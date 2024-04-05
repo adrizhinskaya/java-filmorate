@@ -56,12 +56,8 @@ public class UserDbRepository implements UserRepository {
         String sqlQuery = "update users set " +
                 "email = ?, login = ?, name = ?, birthday = ?" +
                 "where id = ?";
-        jdbcTemplate.update(sqlQuery
-                , user.getEmail()
-                , user.getLogin()
-                , user.getName()
-                , user.getBirthday()
-                , user.getId());
+        jdbcTemplate.update(sqlQuery, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday(),
+                user.getId());
     }
 
     @Override
@@ -75,10 +71,7 @@ public class UserDbRepository implements UserRepository {
     public void addFriend(Integer userId, Integer friendId) {
         String sqlQuery = "insert into users_friend (user_id, friend_id, status) " +
                 "values (?, ?, ?)";
-        jdbcTemplate.update(sqlQuery,
-                userId,
-                friendId,
-                true);
+        jdbcTemplate.update(sqlQuery, userId, friendId, true);
     }
 
     @Override
