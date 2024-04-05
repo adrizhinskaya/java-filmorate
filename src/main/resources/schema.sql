@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS film_genre (
     genre_id INT,
     PRIMARY KEY (film_id, genre_id),
     FOREIGN KEY (film_id) REFERENCES film(id),
-    FOREIGN KEY (genre_id) REFERENCES genre(id)
+    FOREIGN KEY (genre_id) REFERENCES genre(id),
+    UNIQUE (film_id, genre_id)
 );
 
 CREATE TABLE IF NOT EXISTS film_like (

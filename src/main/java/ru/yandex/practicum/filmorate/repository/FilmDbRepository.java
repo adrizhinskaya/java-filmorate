@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.entity.Film;
 import ru.yandex.practicum.filmorate.entity.Genre;
 import ru.yandex.practicum.filmorate.entity.Mpa;
-import ru.yandex.practicum.filmorate.entity.User;
 
 import java.sql.*;
 import java.util.Collection;
@@ -17,9 +16,13 @@ import java.util.List;
 @Repository
 public class FilmDbRepository implements FilmRepository {
     private final JdbcTemplate jdbcTemplate;
+    private final GenreDbRepository genreDbRepository;
+    private final MpaDbRepository mpaDbRepository;
     @Autowired
-    public FilmDbRepository(JdbcTemplate jdbcTemplate) {
+    public FilmDbRepository(JdbcTemplate jdbcTemplate, GenreDbRepository genreDbRepository, MpaDbRepository mpaDbRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.genreDbRepository = genreDbRepository;
+        this.mpaDbRepository = mpaDbRepository;
     }
 
     @Override
@@ -39,9 +42,10 @@ public class FilmDbRepository implements FilmRepository {
             return ps;
         }, keyHolder);
 
+        // вставка значений в film_genre
         Integer id = keyHolder.getKey().intValue();
         if(film.getGenres() != null) {
-            String sqlQuery1 = "insert into film_genre (film_id, genre_id) " +
+            String sqlQuery1 = "merge into film_genre (film_id, genre_id) key (film_id, genre_id) " +
                     "values (?, ?)";
 
             for(Genre g : film.getGenres()) {
@@ -54,7 +58,14 @@ public class FilmDbRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getAll() {
+    public Film getById(Integer id) {
+        String sqlQuery = "select * " +
+                "from film where id = ?";
+        Film a = jdbcTemplate.queryForObject(sqlQuery, this::mapRowToFilm, id);
+        return a;
+    }
+    @Override
+    public Collection<Film> getAll() {
         String sqlQuery = "select * from film";
         return jdbcTemplate.query(sqlQuery, this::mapRowToFilm);
     }
@@ -62,7 +73,7 @@ public class FilmDbRepository implements FilmRepository {
     @Override
     public void update(Film film) {
         String sqlQuery = "update film set " +
-                "name = ?, description = ?, releaseDate = ?, duration = ?, mpa_id = ?" +
+                "name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ?" +
                 "where id = ?";
         jdbcTemplate.update(sqlQuery
                 , film.getName()
@@ -71,6 +82,18 @@ public class FilmDbRepository implements FilmRepository {
                 , film.getDuration()
                 , film.getMpa().getId()
                 , film.getId());
+
+        if(film.getGenres() != null) {
+            String sqlQuery1 = "update film_genre set " +
+                    "genre_id = ?" +
+                    "where film_id = ?";
+
+            for(Genre g : film.getGenres()) {
+                jdbcTemplate.update(sqlQuery1
+                        , g.getId()
+                        , film.getId());
+            }
+        }
     }
 
     @Override
@@ -90,11 +113,13 @@ public class FilmDbRepository implements FilmRepository {
     }
 
     @Override
-    public List<Film> getPopular(Integer count) {
-        String sqlQuery = "SELECT * FROM film WHERE id IN ( SELECT film_id FROM film_like GROUP BY film_id " +
-                "ORDER BY COUNT(user_id) DESC LIMIT ?);";
+    public Collection<Film> getPopular(Integer count) {
+        String sqlQuery = "SELECT f.* FROM film f LEFT OUTER JOIN " +
+                "(SELECT film_id, COUNT(user_id) AS like_count FROM film_like GROUP BY film_id) fl ON f.id = fl.film_id " +
+                "ORDER BY COALESCE(fl.like_count, 0) DESC LIMIT ?";
 
-        return jdbcTemplate.query(sqlQuery, this::mapRowToFilm, count);
+        Collection<Film> pop = jdbcTemplate.query(sqlQuery, this::mapRowToFilm, count);
+        return pop;
     }
 
     @Override
@@ -104,40 +129,28 @@ public class FilmDbRepository implements FilmRepository {
     }
 
     private Film mapRowToFilm(ResultSet resultSet, Integer rowNum) throws SQLException {
+        Collection<Genre> genres = (getFilmGenres(resultSet.getInt("id")));
+
         Film result = Film.builder()
                 .id(resultSet.getInt("id"))
                 .name(resultSet.getString("name"))
                 .description(resultSet.getString("description"))
-                .releaseDate(resultSet.getDate("releaseDate").toLocalDate())
+                .releaseDate(resultSet.getDate("release_date").toLocalDate())
                 .duration(resultSet.getInt("duration"))
+                .mpa(resultSet.getString("mpa_id") != null ? mpaDbRepository.getById(resultSet.getInt("mpa_id")) : null)
+                .genres(genres)
                 .build();
-
         return result;
     }
-//
-//    private Film mapRowToFilm(ResultSet resultSet, Integer rowNum) throws SQLException {
-//        Film result = Film.builder()
-//                .id(resultSet.getInt("id"))
-//                .name(resultSet.getString("name"))
-//                .description(resultSet.getString("description"))
-//                .releaseDate(resultSet.getDate("releaseDate").toLocalDate())
-//                .duration(resultSet.getInt("duration"))
-//                .mpa(resultSet.getObject("mpa") != null ? Mpa.builder()
-//                        .name(resultSet.getString("mpa"))
-//                        .build() : Mpa.builder().build())
-//                .genres(resultSet.getString("genres") != null ? getGenresFromString(resultSet.getString("genres")) : new Genre[0])
-//                .build();
-//        return result;
-//    }
-//
-//    private Genre[] getGenresFromString(String genresString) {
-//        // Метод для разделения строки с жанрами на массив жанров
-//        String[] genreNames = genresString.split(",");
-//        Genre[] genres = new Genre[genreNames.length];
-//        for (int i = 0; i < genreNames.length; i++) {
-//            genres[i] = Genre.builder().name(genreNames[i]).build();
-//        }
-//        return genres;
-//    }
 
+    private Collection<Genre> getFilmGenres(Integer filmId) {
+        String sqlQuery = "select * from film_genre " +
+                "where film_id = ?";
+        return jdbcTemplate.query(sqlQuery, this::mapRowToGenre, filmId);
+    }
+
+    private Genre mapRowToGenre(ResultSet resultSet, Integer rowNum) throws SQLException {
+        Genre g = genreDbRepository.getById(resultSet.getInt("genre_id"));
+        return g;
+    }
 }
