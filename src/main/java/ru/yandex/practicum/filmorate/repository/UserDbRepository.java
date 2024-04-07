@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.entity.User;
 
 import java.sql.*;
 import java.util.Collection;
-import java.util.List;
 
 @Repository
 public class UserDbRepository implements UserRepository {

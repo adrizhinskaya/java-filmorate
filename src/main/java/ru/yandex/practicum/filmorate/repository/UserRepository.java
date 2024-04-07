@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.repository;
 import ru.yandex.practicum.filmorate.entity.User;
 
 import java.util.Collection;
-import java.util.List;
 
 public interface UserRepository {
     public Integer addAndReturnId(User user);

@@ -7,6 +7,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.entity.Film;
 import ru.yandex.practicum.filmorate.entity.Genre;
+import ru.yandex.practicum.filmorate.entity.Mpa;
 
 import java.sql.*;
 import java.util.Collection;
@@ -14,15 +15,10 @@ import java.util.Collection;
 @Repository
 public class FilmDbRepository implements FilmRepository {
     private final JdbcTemplate jdbcTemplate;
-    private final MpaDbRepository mpaDbRepository;
-    private final GenreDbRepository genreDbRepository;
 
     @Autowired
-    public FilmDbRepository(JdbcTemplate jdbcTemplate, MpaDbRepository mpaDbRepository,
-                            GenreDbRepository genreDbRepository) {
+    public FilmDbRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-        this.mpaDbRepository = mpaDbRepository;
-        this.genreDbRepository = genreDbRepository;
     }
 
     @Override
@@ -122,8 +118,20 @@ public class FilmDbRepository implements FilmRepository {
                 .releaseDate(resultSet.getDate("release_date").toLocalDate())
                 .duration(resultSet.getInt("duration"))
                 .mpa(resultSet.getString("mpa_id") != null ?
-                        mpaDbRepository.getById(resultSet.getInt("mpa_id")) : null)
+                        getMpaById(resultSet.getInt("mpa_id")) : null)
                 .genres(genres)
+                .build();
+    }
+
+    public Mpa getMpaById(Integer id) {
+        String sqlQuery = "select * from mpa where id = ?";
+        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToMpa, id);
+    }
+
+    private Mpa mapRowToMpa(ResultSet resultSet, Integer rowNum) throws SQLException {
+        return Mpa.builder()
+                .id(resultSet.getInt("id"))
+                .name(resultSet.getString("name"))
                 .build();
     }
 
@@ -133,6 +141,18 @@ public class FilmDbRepository implements FilmRepository {
     }
 
     private Genre mapRowToFilmGenre(ResultSet resultSet, Integer rowNum) throws SQLException {
-        return genreDbRepository.getById(resultSet.getInt("genre_id"));
+        return getGenreById(resultSet.getInt("genre_id"));
+    }
+
+    public Genre getGenreById(Integer id) {
+        String sqlQuery = "select * from genre where id = ?";
+        return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToGenre, id);
+    }
+
+    private Genre mapRowToGenre(ResultSet resultSet, Integer rowNum) throws SQLException {
+        return Genre.builder()
+                .id(resultSet.getInt("id"))
+                .name(resultSet.getString("name"))
+                .build();
     }
 }
