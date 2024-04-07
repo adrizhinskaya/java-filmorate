@@ -18,9 +18,9 @@ public interface UserRepository {
 
     public void addFriend(Integer userId, Integer friendId);
 
-    public List<User> getFriends(Integer id);
+    public Collection<User> getFriends(Integer id);
 
-    public List<User> getCommonFriends(Integer user1Id, Integer user2Id);
+    public Collection<User> getCommonFriends(Integer user1Id, Integer user2Id);
 
     public void deleteFriend(Integer userId, Integer friendId);
 }

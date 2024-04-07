@@ -23,83 +23,68 @@ public class UserService {
     }
 
     public ResponseEntity<?> addUser(User user) {
-        log.info("Получен POST запрос к эндпоинту \"/user\".");
-
+        log.info("POST \"/user\".");
         Integer id = userRepository.addAndReturnId(user);
         user.setId(id);
-        log.info("Добавлен новый пользователь с id = " + user.getId());
+        log.info(String.format("Создан пользователь id=[%s]", user.getId()));
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
     public Collection<User> getUsers() {
-        log.info("Получен GET запрос к эндпоинту \"/user\".");
-        return userRepository.getAll();
+        log.info("GET \"/user\".");
+        Collection<User> users = userRepository.getAll();
+        log.info(String.format("Получены пользователи [ %s ]", users));
+        return users;
     }
 
     public ResponseEntity<?> updateUser(User user) {
-        log.info("Получен PUT запрос к эндпоинту \"/user\".");
-        if (!userRepository.userExists(user.getId())) {
-            log.error("Не существует пользователя с таким id");
-            throw new UserNotFoundException(String.format("Пользователь с id [%s] не найден.", user.getId()));
-        }
-
+        log.info("PUT \"/user\".");
+        userExsistsCheck(user.getId());
         userRepository.update(user);
-        log.info("Обновлён пользователь с id = " + user.getId());
+        log.info(String.format("Обновлён пользователь id=[%s]", user.getId()));
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
     public ResponseEntity<?> addFriend(int userId, int friendId) {
-        log.info("Получен PUT запрос к эндпоинту \"/users/{id}/friends/{friendId}\".");
-        if (!userRepository.userExists(userId)) {
-            log.error("Не существует пользователя с таким id");
-            throw new UserNotFoundException(String.format("Пользователь с id [%s] не найден.", userId));
-        }
-        if (!userRepository.userExists(friendId)) {
-            log.error("Не существует пользователя с таким id");
-            throw new UserNotFoundException(String.format("Пользователь с id [%s] не найден.", friendId));
-        }
-
+        log.info("PUT \"/users/{id}/friends/{friendId}\".");
+        userExsistsCheck(userId);
+        userExsistsCheck(friendId);
         userRepository.addFriend(userId, friendId);
-        log.info(String.format("Пользователю с id [%s] добавлен новый друг с id [%s] ", userId, friendId));
+        log.info(String.format("Добавлен друг id[%s] пользователю id[%s] ", friendId, userId));
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    public List<User> getFriends(int id) {
-        log.info(String.format("Получен GET запрос [%S] к эндпоинту \"/users/{id}/friends\".", id));
-        if (!userRepository.userExists(id)) {
-            log.error("Не существует пользователя с таким id");
-            throw new UserNotFoundException(String.format("Пользователь с id [%s] не найден.", id));
-        }
-        return userRepository.getFriends(id);
+    public Collection<User> getFriends(int id) {
+        log.info("GET \"/users/{id}/friends\".");
+        userExsistsCheck(id);
+        Collection<User> friends = userRepository.getFriends(id);
+        log.info(String.format("Получены пользователи [ %s ]", friends));
+        return friends;
     }
 
-    public List<User> getCommonFriends(int user1Id, int user2Id) {
-        log.info("Получен GET запрос к эндпоинту \"/users/{id}/friends/common/{otherId}\".");
-        if (!userRepository.userExists(user1Id)) {
-            log.error("Не существует пользователя с таким id");
-            throw new UserNotFoundException(String.format("Пользователь с id [%s] не найден.", user1Id));
-        }
-        if (!userRepository.userExists(user2Id)) {
-            log.error("Не существует пользователя с таким id");
-            throw new UserNotFoundException(String.format("Пользователь с id [%s] не найден.", user2Id));
-        }
-
-        return userRepository.getCommonFriends(user1Id, user2Id);
+    public Collection<User> getCommonFriends(int user1Id, int user2Id) {
+        log.info("GET \"/users/{id}/friends/common/{otherId}\".");
+        userExsistsCheck(user1Id);
+        userExsistsCheck(user2Id);
+        Collection<User> friends = userRepository.getCommonFriends(user1Id, user2Id);
+        log.info(String.format("Получены пользователи [ %s ]", friends));
+        return friends;
     }
 
     public ResponseEntity<?> deleteFriend(int userId, int friendId) {
-        log.info("Получен DELETE запрос к эндпоинту \"/users/{id}/friends/{friendId}\".");
-        if (!userRepository.userExists(userId)) {
-            log.error("Не существует пользователя с таким id");
-            throw new UserNotFoundException(String.format("Пользователь с id [%s] не найден.", userId));
-        }
-        if (!userRepository.userExists(friendId)) {
-            log.error("Не существует пользователя с таким id");
-            throw new UserNotFoundException(String.format("Пользователь с id [%s] не найден.", friendId));
-        }
-
+        log.info("DELETE \"/users/{id}/friends/{friendId}\".");
+        userExsistsCheck(userId);
+        userExsistsCheck(friendId);
         userRepository.deleteFriend(userId, friendId);
-        log.info("Удалён друг с id = " + friendId);
+        log.info("Удалён друг id = " + friendId);
+        log.info(String.format("Удалён друг id[%s] пользователя id[%s] ", friendId, userId));
         return new ResponseEntity<>(userId, HttpStatus.OK);
+    }
+
+    public void userExsistsCheck(int userId) {
+        if (!userRepository.userExists(userId)) {
+            log.info(String.format("Не существует пользователя с id[%s] ", userId));
+            throw new UserNotFoundException(String.format("Пользователь id=[%s] не найден.", userId));
+        }
     }
 }

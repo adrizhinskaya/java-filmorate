@@ -6,7 +6,7 @@
 Содержит данные о пользователях. 
  
 Таблица состоит из полей:
- * первичный ключ user_id — идентификатор пользователя;
+ * первичный ключ id — идентификатор пользователя;
  * email — электронная почта;
  * login — логин пользователя;
  * name — имя пользователя;
@@ -16,7 +16,7 @@
 Содержит данные о пользователях.
 
 Таблица состоит из полей:
-* первичный ключ film_id — идентификатор фильма;
+* первичный ключ id — идентификатор фильма;
 * name - название фильма;
 * description — описание фильма;
 * release_date — дата релиза;
@@ -32,7 +32,7 @@
 Содержит данные о рейтингах (возрастных ограничениях фильма).
 
 Таблица состоит из полей:
-* mpa_id - идентификатор рейтинга (первичный ключ);
+* id - идентификатор рейтинга (первичный ключ);
 * name - наименование рейтинга;
   * G — у фильма нет возрастных ограничений,
   * PG — детям рекомендуется смотреть фильм с родителями,
@@ -44,7 +44,7 @@
 Содержит данные о жанрах фильма.
 
 Таблица состоит из полей:
-* genre_id - идентификатор жанра (первичный ключ);
+* id - идентификатор жанра (первичный ключ);
 * name - наименование жанра;
   * Комедия
   * Драма
@@ -61,9 +61,6 @@
 
 * user_id — идентификатор пользователя (первичный ключ);
 * friend_id (отсылает к таблице movie) — идентификатор друга (внешний ключ);
-* status — статус для связи «дружба» между двумя пользователями:
-  * true - подтверждённая — когда второй пользователь согласился на добавление.
-  * false - неподтверждённая — когда один пользователь отправил запрос на добавление другого пользователя в друзья.
 
 #### film_genre
 Промежуточная таблица. Содержит информацию о том какие жанры имеют фильмы.
@@ -115,23 +112,16 @@ FROM users;
 
 Tоп n наиболее популярных фильмов:
 ```
-SELECT *
-FROM film
-WHERE film_id IN ( SELECT film_id
-                   FROM film_like
-                   GROUP BY film_id
-                   ORDER BY COUNT(user_id) DESC
-                   LIMIT n );
+SELECT f.* 
+FROM film f 
+LEFT OUTER JOIN (SELECT film_id, COUNT(user_id) AS like_count 
+                FROM film_like GROUP BY film_id) fl ON f.id = fl.film_id 
+                ORDER BY COALESCE (fl.like_count, 0) DESC LIMIT ?;
 ```
 Получение списка общих друзей (с id=x) с другим пользователем (с id=y):
 ```
-SELECT *
-FROM users
-WHERE user_id IN (SELECT friend_id
-                  FROM users_friend AS fr1
-                  JOIN users_friend AS fr2 ON fr1.friend_id = fr2.friend_id
-                  WHERE fr1.user_id = x
-                  AND FR2.user_id = y
-                  AND fr1.status = true
-                  AND fr2.status = true);
+SELECT * 
+FROM users WHERE id IN (SELECT fr1.friend_id FROM users_friend AS fr1
+                        JOIN users_friend AS fr2 ON fr1.friend_id = fr2.friend_id 
+                        WHERE fr1.user_id = ? AND fr2.user_id = ?);
 ```

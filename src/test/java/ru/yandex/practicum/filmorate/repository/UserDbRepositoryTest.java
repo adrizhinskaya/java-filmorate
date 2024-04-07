@@ -1,6 +1,8 @@
 //package ru.yandex.practicum.filmorate.repository;
 //
 //import lombok.RequiredArgsConstructor;
+//import org.junit.After;
+//import org.junit.Before;
 //import org.junit.jupiter.api.Test;
 //import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
@@ -9,15 +11,25 @@
 //
 //import java.time.LocalDate;
 //import java.util.Collection;
-//import java.util.List;
 //
 //import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-//import static org.junit.jupiter.api.Assertions.*;
+//import static org.junit.jupiter.api.Assertions.assertEquals;
+//import static org.junit.jupiter.api.Assertions.assertTrue;
 //
-//@JdbcTest // указываем, о необходимости подготовить бины для работы с БД
+//@JdbcTest
 //@RequiredArgsConstructor(onConstructor_ = @Autowired)
 //class UserDbRepositoryTest {
 //    private final JdbcTemplate jdbcTemplate;
+//
+//    @Before
+//    public void clearSequence() {
+//        jdbcTemplate.execute("ALTER SEQUENCE serial RESTART WITH 0;");
+//    }
+//
+//    @After
+//    public void resetSequence() {
+//        jdbcTemplate.execute("ALTER SEQUENCE serial RESTART WITH 0;");
+//    }
 //
 //    @Test
 //    public void testGetUserById() {

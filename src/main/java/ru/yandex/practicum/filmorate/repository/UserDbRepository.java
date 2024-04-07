@@ -21,9 +21,7 @@ public class UserDbRepository implements UserRepository {
     }
 
     public Integer addAndReturnId(User user) {
-        String sqlQuery = "insert into users(email, login, name, birthday) " +
-                "values (?, ?, ?, ?)";
-
+        String sqlQuery = "insert into users(email, login, name, birthday) values (?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
@@ -40,8 +38,7 @@ public class UserDbRepository implements UserRepository {
 
     @Override
     public User getById(Integer id) {
-        String sqlQuery = "select * " +
-                "from users where id = ?";
+        String sqlQuery = "select * from users where id = ?";
         return jdbcTemplate.queryForObject(sqlQuery, this::mapRowToUser, id);
     }
 
@@ -53,9 +50,7 @@ public class UserDbRepository implements UserRepository {
 
     @Override
     public void update(User user) {
-        String sqlQuery = "update users set " +
-                "email = ?, login = ?, name = ?, birthday = ?" +
-                "where id = ?";
+        String sqlQuery = "update users set email = ?, login = ?, name = ?, birthday = ? where id = ?";
         jdbcTemplate.update(sqlQuery, user.getEmail(), user.getLogin(), user.getName(), user.getBirthday(),
                 user.getId());
     }
@@ -69,26 +64,21 @@ public class UserDbRepository implements UserRepository {
 
     @Override
     public void addFriend(Integer userId, Integer friendId) {
-        String sqlQuery = "insert into users_friend (user_id, friend_id, status) " +
-                "values (?, ?, ?)";
-        jdbcTemplate.update(sqlQuery, userId, friendId, true);
+        String sqlQuery = "insert into users_friend (user_id, friend_id) values (?, ?)";
+        jdbcTemplate.update(sqlQuery, userId, friendId);
     }
 
     @Override
-    public List<User> getFriends(Integer id) {
-        String sqlQuery = "SELECT u.id, u.email, u.login, u.name, u.birthday " +
-                "FROM users u " +
-                "JOIN users_friend uf ON u.id = uf.friend_id " +
-                "WHERE uf.user_id = ?";
-
+    public Collection<User> getFriends(Integer id) {
+        String sqlQuery = "select u.* from users u join users_friend uf on u.id = uf.friend_id where uf.user_id = ?";
         return jdbcTemplate.query(sqlQuery, this::mapRowToUser, id);
     }
 
     @Override
-    public List<User> getCommonFriends(Integer user1Id, Integer user2Id) {
-        String sqlQuery = "SELECT * FROM users WHERE id IN (SELECT fr1.friend_id FROM users_friend AS fr1 " +
-                "JOIN users_friend AS fr2 ON fr1.friend_id = fr2.friend_id " +
-                "WHERE fr1.user_id = ? AND fr2.user_id = ?)";
+    public Collection<User> getCommonFriends(Integer user1Id, Integer user2Id) {
+        String sqlQuery = "select * from users where id in (select fr1.friend_id from users_friend as fr1 " +
+                "join users_friend as fr2 on fr1.friend_id = fr2.friend_id " +
+                "where fr1.user_id = ? and fr2.user_id = ?)";
 
         return jdbcTemplate.query(sqlQuery, this::mapRowToUser, user1Id, user2Id);
     }

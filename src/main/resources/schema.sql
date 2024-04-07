@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS film (
     release_date DATE CHECK (release_date >= '1895-12-28' ),
     duration INT CHECK (duration > 0),
     mpa_id INT,
-    FOREIGN KEY (mpa_id) REFERENCES mpa(id)
+    FOREIGN KEY (mpa_id) REFERENCES mpa(id) ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS genre (
@@ -31,8 +31,8 @@ CREATE TABLE IF NOT EXISTS film_genre (
     film_id INT,
     genre_id INT,
     PRIMARY KEY (film_id, genre_id),
-    FOREIGN KEY (film_id) REFERENCES film(id),
-    FOREIGN KEY (genre_id) REFERENCES genre(id),
+    FOREIGN KEY (film_id) REFERENCES film(id) ON DELETE CASCADE,
+    FOREIGN KEY (genre_id) REFERENCES genre(id) ON DELETE RESTRICT,
     UNIQUE (film_id, genre_id)
 );
 
@@ -40,15 +40,14 @@ CREATE TABLE IF NOT EXISTS film_like (
     film_id INT,
     user_id INT,
     PRIMARY KEY (film_id, user_id),
-    FOREIGN KEY (film_id) REFERENCES film(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (film_id) REFERENCES film(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS users_friend (
     user_id INT,
     friend_id INT,
-    status BOOL NOT NULL,
     PRIMARY KEY (user_id, friend_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (friend_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE
 );

@@ -19,6 +19,7 @@
 //class GenreDbRepositoryTest {
 //    private final JdbcTemplate jdbcTemplate;
 //
+//
 //    @Test
 //    public void testGetGenreById() {
 //        GenreDbRepository genreDbRepository = new GenreDbRepository(jdbcTemplate);
