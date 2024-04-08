@@ -1,104 +1,133 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.FilmAlreadyExistException;
+import ru.yandex.practicum.filmorate.entity.Film;
+import ru.yandex.practicum.filmorate.entity.Genre;
 import ru.yandex.practicum.filmorate.exception.FilmNotFoundException;
+import ru.yandex.practicum.filmorate.exception.GenreBadRequestException;
+import ru.yandex.practicum.filmorate.exception.MpaBadRequestException;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.repository.FilmRepository;
+import ru.yandex.practicum.filmorate.repository.GenreDbRepository;
+import ru.yandex.practicum.filmorate.repository.MpaDbRepository;
+import ru.yandex.practicum.filmorate.repository.UserRepository;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class FilmService {
-    private final FilmStorage filmStorage;
-    private final UserStorage userStorage;
+    private final FilmRepository filmRepository;
+    private final UserRepository userRepository;
+    private final MpaDbRepository mpaDbRepository;
+    private final GenreDbRepository genreDbRepository;
 
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
-    }
-
-    public Collection<Film> getFilms() {
-        log.info("Получен GET запрос к эндпоинту \"/film\".");
-        return filmStorage.getFilms();
-    }
-
-    public List<Film> getPopular(int count) {
-        log.info("Получен GET запрос к эндпоинту \"/films/popular?count={count}\".");
-        Collection<Film> films = filmStorage.getFilms();
-        if (count <= 0 || count > films.size()) {
-            count = 10;
-        }
-
-        List<Film> sortedFilms = films.stream()
-                .sorted(Comparator.comparingInt(value -> value.getLikes().size()))
-                .limit(count)
-                .collect(Collectors.toList());
-        Collections.reverse(sortedFilms);
-        return sortedFilms;
+    @Autowired
+    public FilmService(FilmRepository filmRepository, UserRepository userRepository, MpaDbRepository mpaDbRepository,
+                       GenreDbRepository genreDbRepository) {
+        this.filmRepository = filmRepository;
+        this.userRepository = userRepository;
+        this.mpaDbRepository = mpaDbRepository;
+        this.genreDbRepository = genreDbRepository;
     }
 
     public ResponseEntity<?> addFilm(Film film) {
-        log.info("Получен POST запрос к эндпоинту \"/film\".");
-        if (filmStorage.filmExists(film.getId())) {
-            log.error("Уже существует фильм с таким id");
-            throw new FilmAlreadyExistException(String.format("Уже существует фильм с id [%s]", film.getId()));
-        }
-
-        filmStorage.addFilm(film);
-        log.info("Добавлен новый фильм с id = " + film.getId());
+        log.info("POST \"/films\".");
+        mpaExsistsCheck(film.getMpa().getId());
+        genreExsistsCheck(film.getGenres());
+        Integer id = filmRepository.addAndReturnId(film);
+        film.setId(id);
+        log.info(String.format("Создан фильм id=[%s] и жанрами [%s]", film.getId(), film.getGenres()));
         return new ResponseEntity<>(film, HttpStatus.OK);
     }
 
-    public ResponseEntity<?> updateFilm(Film film) {
-        log.info("Получен PUT запрос к эндпоинту \"/film\".");
-        if (!filmStorage.filmExists(film.getId())) {
-            log.error("Не существует фильма с таким id");
-            throw new FilmNotFoundException(String.format("Фильм с id [%s] не найден.", film.getId()));
-        }
+    public Film getFilmById(Integer id) {
+        log.info("POST \"/films/{id}.");
+        Film film = filmRepository.getById(id);
+        log.info(String.format("Получен фильм id=[%s] с жанрами [%s]", film.getId(), film.getGenres()));
+        return film;
+    }
 
-        filmStorage.updateFilm(film);
-        log.info("Обновлён фильм с id = " + film.getId());
+    public Collection<Film> getFilms() {
+        log.info("GET \"/films\".");
+        Collection<Film> films = filmRepository.getAll();
+        log.info(String.format("Получены фильмы [ %s ]", films));
+        return films;
+    }
+
+    public ResponseEntity<?> updateFilm(Film film) {
+        log.info("PUT \"/films\".");
+        filmExsistsCheck(film.getId());
+        mpaExsistsCheck(film.getMpa().getId());
+        genreExsistsCheck(film.getGenres());
+        filmRepository.update(film);
+        log.info(String.format("Обновлён фильм id=[%s]", film.getId()));
+
         return new ResponseEntity<>(film, HttpStatus.OK);
     }
 
     public ResponseEntity<?> addLike(int filmId, int userId) {
-        log.info("Получен PUT запрос к эндпоинту \"/films/{id}/like/{userId}\".");
-        if (!userStorage.userExists(userId)) {
-            log.error("Не существует пользователя с таким id");
-            throw new UserNotFoundException(String.format("Пользователь с id [%s] не найден.", userId));
-        }
-        if (!filmStorage.filmExists(filmId)) {
-            log.error("Не существует фильма с таким id");
-            throw new UserNotFoundException(String.format("Фильм с id [%s] не найден.", filmId));
-        }
-        filmStorage.getFilmById(filmId).addLike(userId);
-        log.info(String.format("Добавлен лайк фильму с id [%s] от пользователя с id [%s]", filmId, userId));
+        log.info("PUT \"/films/{id}/like/{userId}\".");
+        userExsistsCheck(userId);
+        filmExsistsCheck(filmId);
+        filmRepository.addLike(filmId, userId);
+        log.info(String.format("Добавлен лайк фильму id=[%s] от пользователя id=[%s]", filmId, userId));
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    public Collection<Film> getPopular(int count) {
+        log.info("GET \"/films/popular?count={count}\".");
+        Collection<Film> films = filmRepository.getAll();
+        if (count <= 0 || count > films.size()) {
+            count = 10;
+        }
+        Collection<Film> popFilms = filmRepository.getPopular(count);
+        log.info(String.format("Получены фильмы [ %s ]", popFilms));
+        return popFilms;
+    }
+
     public ResponseEntity<?> deleteLike(int filmId, int userId) {
-        log.info("Получен DELETE запрос к эндпоинту \"/films/{id}/like/{userId}\".");
-        if (!userStorage.userExists(userId)) {
-            log.error("Не существует пользователя с таким id");
-            throw new UserNotFoundException(String.format("Пользователь с id [%s] не найден.", userId));
-        }
-        if (!filmStorage.filmExists(filmId)) {
-            log.error("Не существует фильма с таким id");
-            throw new UserNotFoundException(String.format("Фильм с id [%s] не найден.", filmId));
-        }
-        filmStorage.getFilmById(filmId).deleteLike(userId);
-        log.info(String.format("Удалён лайк фильму с id [%s] от пользователя с id [%s]", filmId, userId));
+        log.info("DELETE \"/films/{id}/like/{userId}\".");
+        userExsistsCheck(userId);
+        filmExsistsCheck(filmId);
+        filmRepository.deleteLike(filmId, userId);
+        log.info(String.format("Удалён лайк фильму id=[%s] от пользователя id=[%s]", filmId, userId));
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    private void filmExsistsCheck(int id) {
+        if (!filmRepository.filmExists(id)) {
+            log.error("Не существует фильма с таким id");
+            throw new FilmNotFoundException(String.format("Фильм id=[%s] не найден.", id));
+        }
+    }
+
+    private void userExsistsCheck(int id) {
+        if (!userRepository.userExists(id)) {
+            log.error("Не существует пользователя с таким id");
+            throw new UserNotFoundException(String.format("Пользователь id=[%s] не найден.", id));
+        }
+    }
+
+    private void mpaExsistsCheck(int id) {
+        if (!mpaDbRepository.mpaExists(id)) {
+            log.error("Не существует mpa с таким id");
+            throw new MpaBadRequestException(String.format("Mpa id=[%s] не найден.", id));
+        }
+    }
+
+    private void genreExsistsCheck(Collection<Genre> genres) {
+        if (genres != null) {
+            for (Genre g : genres) {
+                if (!genreDbRepository.genreExists(g.getId())) {
+                    log.error("Не существует genre с таким id");
+                    throw new GenreBadRequestException(String.format("Жанр id=[%s] не найден.", g.getId()));
+                }
+            }
+        }
     }
 }
